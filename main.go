@@ -9,6 +9,7 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"net/http/httputil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -47,11 +48,13 @@ var (
     // http cache
     redis_host     =  flag.String("redis_host", "192.167.1.22:6379", "redis host 192.167.1.22:6379")
     redis_password = flag.String("redis_pass", "", "redis password default '' ")
-    redis_db       = flag.Int("redis_db", 0, "redis db default 0")
+    redis_db       = flag.Int("redis_db", 3, "redis db default 3")
 	//缓存方式
 	cacheType  = flag.String("cache_type", "nocache", "cache type is redis、memory、nocache")
     cacheTtime = flag.Int("cache_time", 20, " cache 20s Second")
     refreshKey = flag.String("cache_refresh_key", "key", "refreshKey key")
+    
+    proxy = flag.String("proxy", "http://192.167.1.6:8485", " proxy x.x.x.x:8084")
 )
 
 var (
@@ -116,9 +119,20 @@ func main() {
             os.Exit(1)
         }
 	}
-    //
-    handler := http.HandlerFunc(Serve)
-	http.Handle("/", cacheClient.Middleware(handler))
+	if *proxy !="" {
+        //proxy
+        remote, errr := url.Parse(*proxy)
+    	if errr != nil {
+    	    fmt.Println(errr)
+            os.Exit(1)
+    	}
+    	http_proxy := httputil.NewSingleHostReverseProxy(remote)
+        http.Handle("/", cacheClient.Middleware(http_proxy))
+	}else{
+        //
+        handler := http.HandlerFunc(Serve)
+    	http.Handle("/", cacheClient.Middleware(handler))
+	}
 
 
 	fmt.Printf(" %s http server started on %s\n", *cacheType, *FlagHTTPAddr)
@@ -135,7 +149,8 @@ func Serve(res http.ResponseWriter, req *http.Request) {
 			log.Println(err)
 		}
 	}()
-
+	
+    // FCGIBackendConfig
 	filename := filepath.Join(*FlagDocRoot, req.URL.Path)
 	scriptname := req.URL.Path
 	isFCGI := false
