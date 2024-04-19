@@ -40,7 +40,7 @@ Usage of /tmp/go-build3712817361/b001/exe/main:
 
 ```
 
-
+## 缓存key  r.URL
 ```
 // Middleware is the HTTP cache middleware handler.
 func (c *Client) Middleware(next http.Handler) http.Handler {
