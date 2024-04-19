@@ -4,7 +4,7 @@
 
 golang + redis/memory + fastcgi/反向代理 + php 
 
-## usage
+## 使用
 ```
 Usage of /tmp/go-build3712817361/b001/exe/main:
   -cache_refresh_key string
@@ -12,7 +12,7 @@ Usage of /tmp/go-build3712817361/b001/exe/main:
   -cache_time int
     	 cache 20s Second (default 20)
   -cache_type string
-    	cache type is redis or memory or  not cache, default  not cache (default "nocache")
+    	cache type is redis、memory、nocache, (default "nocache")
   -ext comma separated list
     	the fastcgi file extension(s) comma separated list (default "php")
   -fcgi string
@@ -39,6 +39,11 @@ Usage of /tmp/go-build3712817361/b001/exe/main:
     	the write timeout, zero means unlimited
 
 ```
+
+## 更新缓存
+
+> http://192.167.1.124:6065/?key
+
 
 ## 缓存key  r.URL
 ```

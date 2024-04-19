@@ -49,7 +49,7 @@ var (
     redis_password = flag.String("redis_pass", "", "redis password default '' ")
     redis_db       = flag.Int("redis_db", 0, "redis db default 0")
 	//缓存方式
-	cacheType  = flag.String("cache_type", "nocache", "cache type is redis or memory or  not cache, default  not cache")
+	cacheType  = flag.String("cache_type", "nocache", "cache type is redis、memory、nocache")
     cacheTtime = flag.Int("cache_time", 20, " cache 20s Second")
     refreshKey = flag.String("cache_refresh_key", "key", "refreshKey key")
 )
