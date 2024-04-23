@@ -69,6 +69,9 @@ func (c *Client) Middleware(next http.Handler) http.Handler {
 
  1.配置缓存key参数
  
- 2.设置白名单地址、删除、新增、修改
+ 2.设置白名单url、删除、新增、修改
  
+ 3.设置 携带token不缓存
+ 
+ 4.waf判断
  
