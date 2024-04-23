@@ -6,13 +6,13 @@ golang + redis/memory + fastcgi/反向代理 + php
 
 ## 使用
 ```
-Usage of /tmp/go-build3712817361/b001/exe/main:
+Usage of ./pnginx:
   -cache_refresh_key string
     	refreshKey key (default "key")
   -cache_time int
     	 cache 20s Second (default 20)
   -cache_type string
-    	cache type is redis、memory、nocache, (default "nocache")
+    	cache type is redis、memory、nocache (default "nocache")
   -ext comma separated list
     	the fastcgi file extension(s) comma separated list (default "php")
   -fcgi string
@@ -23,8 +23,10 @@ Usage of /tmp/go-build3712817361/b001/exe/main:
     	the default index file comma separated list (default "index.php,index.html")
   -listing
     	whether to allow directory listing or not
+  -proxy string
+    	 proxy http://192.167.1.6:8485
   -redis_db int
-    	redis db default 0
+    	redis db default 3 (default 3)
   -redis_host string
     	redis host 192.167.1.22:6379 (default "192.167.1.22:6379")
   -redis_pass string
@@ -37,6 +39,12 @@ Usage of /tmp/go-build3712817361/b001/exe/main:
     	the read timeout, zero means unlimited
   -wtimeout int
     	the write timeout, zero means unlimited
+
+
+ fcgi  [ unix:///tmp/php-cgi-72.sock ] server started 
+ cache [ redis ] cache  [ 20s ] 
+ http server started on  [ :6065 ] 
+
 
 ```
 

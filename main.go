@@ -30,7 +30,7 @@ var (
 	// FlagDocRoot .
 	FlagDocRoot = flag.String("root", "./", "the document root")
 	// FlagFCGIBackend .
-	FlagFCGIBackend = flag.String("fcgi", "unix:///var/run/php/php7.0-fpm.sock", "the fcgi unix:///tmp/php-cgi-72.sock, you can pass more fcgi related params as query params")
+	FlagFCGIBackend = flag.String("fcgi", "unix:///tmp/php-cgi-71.sock", "the fcgi unix:///tmp/php-cgi-72.sock, you can pass more fcgi related params as query params")
 	// FlagIndex .
 	FlagIndex = flag.String("index", "index.php,index.html", "the default index file `comma separated list`")
 	// FlagRouter .
@@ -54,7 +54,7 @@ var (
     cacheTtime = flag.Int("cache_time", 20, " cache 20s Second")
     refreshKey = flag.String("cache_refresh_key", "key", "refreshKey key")
     
-    proxy = flag.String("proxy", "http://192.167.1.6:8485", " proxy x.x.x.x:8084")
+    proxy = flag.String("proxy", "", " proxy http://192.167.1.6:8485")
 )
 
 var (
@@ -73,7 +73,6 @@ type BackendConfig struct {
 
 func init() {
 	flag.Parse()
-	fmt.Println("  checking the fcgi backend ...")
 	cnf, err := GetBackendConfig(*FlagFCGIBackend)
 	if err != nil {
 		log.Fatal(err)
@@ -126,16 +125,17 @@ func main() {
     	    fmt.Println(errr)
             os.Exit(1)
     	}
+    	fmt.Printf(" proxy [ %s ] server started \n", *proxy)
     	http_proxy := httputil.NewSingleHostReverseProxy(remote)
         http.Handle("/", cacheClient.Middleware(http_proxy))
 	}else{
-        //
+        //fcgi
+        fmt.Printf(" fcgi  [ %s ] server started \n", *FlagFCGIBackend)
         handler := http.HandlerFunc(Serve)
     	http.Handle("/", cacheClient.Middleware(handler))
 	}
-
-
-	fmt.Printf(" %s http server started on %s\n", *cacheType, *FlagHTTPAddr)
+    fmt.Printf(" cache [ %s ] cache  [ %ds ] \n", *cacheType, *cacheTtime)
+	fmt.Printf(" http server started on  [ %s ] \n",  *FlagHTTPAddr)
 	log.Fatal(http.ListenAndServe(*FlagHTTPAddr, nil))
 }
 
