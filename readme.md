@@ -10,13 +10,13 @@ Usage of ./pnginx:
   -cache_refresh_key string
     	refreshKey key (default "key")
   -cache_time int
-    	 cache 20s Second (default 20)
+    	 cache 60s Second and less 2s is no cache (default 60)
   -cache_type string
-    	cache type is redis、memory、nocache (default "nocache")
+    	cache type is redis、memory (default "memory")
   -ext comma separated list
     	the fastcgi file extension(s) comma separated list (default "php")
   -fcgi string
-    	the fcgi unix:///tmp/php-cgi-72.sock, you can pass more fcgi related params as query params (default "unix:///var/run/php/php7.0-fpm.sock")
+    	the fcgi unix:///tmp/php-cgi-72.sock, you can pass more fcgi related params as query params (default "unix:///tmp/php-cgi-71.sock")
   -http string
     	the http address to listen on (default ":6065")
   -index comma separated list
@@ -48,7 +48,7 @@ Usage of ./pnginx:
 
 ```
 
-## 更新缓存
+## 更新缓存 refreshKey
 
 > http://192.167.1.124:6065/?key
 
@@ -63,3 +63,12 @@ func (c *Client) Middleware(next http.Handler) http.Handler {
 	})
 }
 ```
+
+
+## todo 
+
+ 1.配置缓存key参数
+ 
+ 2.设置白名单地址、删除、新增、修改
+ 
+ 
