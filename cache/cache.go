@@ -15,6 +15,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+    "github.com/microcosm-cc/bluemonday"
 )
 
 // Response is the cached response data structure.
@@ -65,9 +66,19 @@ type Adapter interface {
 // Middleware is the HTTP cache middleware handler.
 func (c *Client) Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	    fmt.Println(r.URL.String())
 	    
-	    
+	    // @TODO move this  It protects sites from XSS attacks. 
+		p := bluemonday.UGCPolicy()
+		r.ParseForm()
+		for k, v := range r.Form {
+			unSanitized := strings.Join(v, "")            // @TODO check this
+			r.Form[k] = []string{p.Sanitize(unSanitized)} // @TODO check this
+			// @TODO check if the input had malicious code and log it
+		}
+	    //MethodGet
 		if c.cacheableMethod(r.Method) {
+		    //排序
 			sortURLParams(r.URL)
 			key := generateKey(r.URL.String())    //缓存key r *http.Request r.URL
 			if r.Method == http.MethodPost && r.Body != nil {

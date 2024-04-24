@@ -30,7 +30,7 @@ var (
 	// FlagDocRoot .
 	FlagDocRoot = flag.String("root", "./", "the document root")
 	// FlagFCGIBackend .
-	FlagFCGIBackend = flag.String("fcgi", "unix:///tmp/php-cgi-71.sock", "the fcgi unix:///tmp/php-cgi-72.sock, you can pass more fcgi related params as query params")
+	FlagFCGIBackend = flag.String("fcgi", "", "the fcgi unix:///tmp/php-cgi-72.sock, you can pass more fcgi related params as query params")
 	// FlagIndex .
 	FlagIndex = flag.String("index", "index.php,index.html", "the default index file `comma separated list`")
 	// FlagRouter .
@@ -47,7 +47,7 @@ var (
 
     // http cache
     redis_host     = flag.String("redis_host", "192.167.1.22:6379", "redis host 192.167.1.22:6379")
-    redis_password = flag.String("redis_pass", "", "redis password default '' ")
+    redis_password = flag.String("redis_pass", "", "redis password ")
     redis_db       = flag.Int("redis_db", 3, "redis db default 3")
 	//缓存方式
 	cacheType  = flag.String("cache_type", "memory", "cache type is redis、memory")
@@ -75,12 +75,15 @@ func init() {
 	flag.Parse()
 	//代理不判断 fcgi
 	if *proxy =="" {
-    	cnf, err := GetBackendConfig(*FlagFCGIBackend)
-    	if err != nil {
-    		log.Fatal(err)
-    	}
-    	fmt.Printf(" root  [ %s ] \n", *FlagDocRoot)
-    	FCGIBackendConfig = cnf
+	    
+	    if *FlagFCGIBackend !="" {
+        	cnf, err := GetBackendConfig(*FlagFCGIBackend)
+        	if err != nil {
+        		log.Fatal(err)
+        	}
+        	FCGIBackendConfig = cnf
+	    }
+	    fmt.Printf(" root  [ %s ] \n", *FlagDocRoot)
 	}
 }
 
@@ -133,10 +136,16 @@ func main() {
     	http_proxy := httputil.NewSingleHostReverseProxy(remote)
         http.Handle("/", cacheClient.Middleware(http_proxy))
 	}else{
-        //fcgi
-        fmt.Printf(" fcgi  [ %s ] server started \n", *FlagFCGIBackend)
-        handler := http.HandlerFunc(Serve)
-    	http.Handle("/", cacheClient.Middleware(handler))
+	    if *FlagFCGIBackend != "" {
+            //fcgi
+            fmt.Printf(" fcgi  [ %s ] server started \n", *FlagFCGIBackend)
+            handler := http.HandlerFunc(Serve)
+        	http.Handle("/", cacheClient.Middleware(handler))
+	    }else{
+            //WebServe next.ServeHTTP(w, r)
+            fs := http.FileServer(http.Dir(*FlagDocRoot))  
+        	http.Handle("/", cacheClient.Middleware( http.StripPrefix("/", fs) ))
+	    }
 	}
     fmt.Printf(" cache [ %s ] cache  [ %ds ] \n", *cacheType, *cacheTtime)
 	fmt.Printf(" http server started on  [ %s ] \n",  *FlagHTTPAddr)
@@ -215,8 +224,7 @@ func Serve(res http.ResponseWriter, req *http.Request) {
 		}
 		pathInfo = filepath.Join("/", parts[1])
 	}
-    log.Println(pathInfo)
-    
+	
     //real addr
 	host, port, _ := net.SplitHostPort(req.RemoteAddr)
 	

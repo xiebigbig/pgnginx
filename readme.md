@@ -1,15 +1,15 @@
 
 # pnginx 
 
-
-golang + redis/memory + fastcgi/反向代理 + php 
+## golang + cache[redis/memory] + fastcgi/反向代理/静态资源 
 
 ## 使用
 
 
 ```
-[root@Web6 pnginx]# pnginx -proxy http://192.168.9.18/
-[root@Web6 pnginx]# pnginx -fcgi "unix:///tmp/php-cgi-71.sock" -root /www/html/
+[root@Web6 pnginx]# pnginx -proxy http://192.168.9.18/   #反向代理
+[root@Web6 pnginx]# pnginx -fcgi "unix:///tmp/php-cgi-71.sock" -root /www/html/ #cgi
+[root@Web6 pnginx]# pnginx -root /www/html/  #静态资源
 
 Usage of ./pnginx:
   -cache_refresh_key string
@@ -63,7 +63,18 @@ Usage of ./pnginx:
 // Middleware is the HTTP cache middleware handler.
 func (c *Client) Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		key := generateKey(r.URL.String())   //缓存key   r.URL
+	
+	    // @TODO move this  It protects sites from XSS attacks. 
+		p := bluemonday.UGCPolicy()
+		r.ParseForm()
+		for k, v := range r.Form {
+			unSanitized := strings.Join(v, "")            // @TODO check this
+			r.Form[k] = []string{p.Sanitize(unSanitized)} // @TODO check this
+		}
+		
+		//缓存key  Get  r.URL
+		key := generateKey(r.URL.String())   
+		
 		next.ServeHTTP(w, r)
 	})
 }
