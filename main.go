@@ -14,9 +14,9 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
-	"bytes"
-    "strconv"
-	"io/ioutil"
+// 	"bytes"
+    // "strconv"
+// 	"io/ioutil"
 	"github.com/alash3al/go-fastcgi-client"
     
     "pnginx/cache"
@@ -46,7 +46,7 @@ var (
 	
 
     // http cache
-    redis_host     =  flag.String("redis_host", "192.167.1.22:6379", "redis host 192.167.1.22:6379")
+    redis_host     = flag.String("redis_host", "192.167.1.22:6379", "redis host 192.167.1.22:6379")
     redis_password = flag.String("redis_pass", "", "redis password default '' ")
     redis_db       = flag.Int("redis_db", 3, "redis db default 3")
 	//缓存方式
@@ -73,11 +73,15 @@ type BackendConfig struct {
 
 func init() {
 	flag.Parse()
-	cnf, err := GetBackendConfig(*FlagFCGIBackend)
-	if err != nil {
-		log.Fatal(err)
+	//代理不判断 fcgi
+	if *proxy =="" {
+    	cnf, err := GetBackendConfig(*FlagFCGIBackend)
+    	if err != nil {
+    		log.Fatal(err)
+    	}
+    	fmt.Printf(" root  [ %s ] \n", *FlagDocRoot)
+    	FCGIBackendConfig = cnf
 	}
-	FCGIBackendConfig = cnf
 }
 
 
@@ -213,7 +217,10 @@ func Serve(res http.ResponseWriter, req *http.Request) {
 	}
     log.Println(pathInfo)
     
+    //real addr
 	host, port, _ := net.SplitHostPort(req.RemoteAddr)
+	
+	//req.Header
 	params := map[string]string{
 		"SERVER_SOFTWARE":    "pgnginx",
 		"SERVER_PROTOCOL":    req.Proto,
@@ -232,16 +239,17 @@ func Serve(res http.ResponseWriter, req *http.Request) {
 		"PATH_INFO":          pathInfo,
 		"ORIG_PATH_INFO":     pathInfo,
 		"HTTP_HOST":          req.Host,
-		
 	}
-	
+	//req.Header
 	for k, v := range req.Header {
 		if len(v) < 1 {
 			continue
 		}
-		k = strings.ToUpper(fmt.Sprintf("HTTP_%s", strings.Replace(k, "-", "_", -1)))
+		k = strings.ToUpper(fmt.Sprintf("%s", strings.Replace(k, "-", "_", -1)))
 		params[k] = strings.Join(v, ";")
+// 		log.Println(k, "->", v)
 	}
+
 
 	c, e := fcgiclient.Dial(FCGIBackendConfig.Network, FCGIBackendConfig.Address)
 	if c == nil {
@@ -254,22 +262,8 @@ func Serve(res http.ResponseWriter, req *http.Request) {
 	c.SetReadTimeout(time.Duration(*FlagReadTimeout) * time.Second)
 	c.SetSendTimeout(time.Duration(*FlagWriteTimeout) * time.Second)
 	
-	body := bytes.NewReader([]byte("asd=1"))
-	if req.Method == "POST" {
-		bodyss, _ := ioutil.ReadAll(req.Body)
-		reqms   := string(bodyss)
-    	body = bytes.NewReader([]byte(reqms))
-    	params["CONTENT_TYPE"]   = "application/x-www-form-urlencoded"
-    	params["REQUEST_METHOD"] =  strings.ToUpper("POST")
-    	params["CONTENT_LENGTH"] =  strconv.FormatInt(int64(body.Len()), 10)
-	}
-	
-// 	// key params    判断存在否，再去设置、获取
-// 	log.Println(params)
-// 	log.Println(body)
-	
 	// php value  请求     缓存返回结果  resp  ContentLength  Header StatusCode Body
-	resp, err := c.Request(params, body)
+	resp, err := c.Request(params, req.Body)
 	if resp == nil || resp.Body == nil || err != nil {
 		res.WriteHeader(500)
 		res.Write([]byte(err.Error()))
@@ -277,18 +271,6 @@ func Serve(res http.ResponseWriter, req *http.Request) {
 	}
 	defer resp.Body.Close()
     
-    // 设置缓存  resp  ContentLength  Header StatusCode Body
-    
-//     bodyresp, _ := ioutil.ReadAll(resp.Body)
-// 	reqmsbodyresp   := string(bodyresp)
-// 	log.Println(reqmsbodyresp)
-//     // body = bytes.NewReader([]byte(reqms))
-    	
-    
-//     log.Println(resp.Header)
-    
-    
-
 	for k, vals := range resp.Header {
 		for _, v := range vals {
 			res.Header().Add(k, v)

@@ -5,7 +5,12 @@
 golang + redis/memory + fastcgi/反向代理 + php 
 
 ## 使用
+
+
 ```
+[root@Web6 pnginx]# pnginx -proxy http://192.168.9.18/
+[root@Web6 pnginx]# pnginx -fcgi "unix:///tmp/php-cgi-71.sock" -root /www/html/
+
 Usage of ./pnginx:
   -cache_refresh_key string
     	refreshKey key (default "key")
